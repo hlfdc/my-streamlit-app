@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import requests
 from dotenv import load_dotenv
-from streamlit_mic_recorder import mic_recorder
 import base64
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
@@ -10,18 +9,18 @@ import textwrap
 
 load_dotenv()
 
-# ====================== 页面配置（手机APP必选） ======================
+# ====================== 页面配置（手机APP专用） ======================
 st.set_page_config(
     page_title="生活小管家",
     page_icon="🏠",
-    layout="centered",  # 手机端必须 centered！
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
 # ====================== 📱 手机APP风格 CSS ======================
 st.markdown("""
 <style>
-/* 全局手机APP样式 */
+/* 手机APP全局样式 */
 body {
     background-color: #f2f5f7 !important;
     max-width: 480px !important;
@@ -31,7 +30,7 @@ body {
     padding: 0 12px !important;
     max-width: 480px !important;
 }
-/* 卡片：手机APP圆角 */
+/* APP卡片 */
 .card {
     background: #ffffff;
     border-radius: 18px;
@@ -39,7 +38,7 @@ body {
     margin-bottom: 14px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.04);
 }
-/* 标题：APP大标题 */
+/* APP标题 */
 .title {
     font-size: 26px;
     font-weight: 800;
@@ -51,7 +50,7 @@ body {
     color: #6b7280;
     margin-bottom: 20px;
 }
-/* 按钮：APP质感 */
+/* APP按钮 */
 .stButton>button {
     width: 100% !important;
     border-radius: 16px !important;
@@ -65,12 +64,12 @@ body {
 .stButton>button:active {
     background-color: #3562E6 !important;
 }
-/* 输入框圆角 */
+/* 输入框 */
 .stTextInput>div>div, .stNumberInput>div>div, .stSelectbox>div>div {
     border-radius: 16px !important;
     height: 50px !important;
 }
-/* 隐藏侧边栏、水印、顶部导航 */
+/* 隐藏所有多余元素 */
 section[data-testid="stSidebar"] {display: none !important;}
 #MainMenu {visibility: hidden !important;}
 footer {visibility: hidden !important;}
@@ -78,7 +77,7 @@ header {display: none !important;}
 </style>
 """, unsafe_allow_html=True)
 
-# ====================== 底部 Tab 菜单（模拟APP底部栏） ======================
+# ====================== 底部TAB ======================
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "🏠 首页", "🍳 菜谱", "🛠️ 妙招", "📦 食材", "📜 历史"
 ])
@@ -113,11 +112,7 @@ if "history" not in st.session_state:
 def add_history(typ, question, answer):
     st.session_state.history.append({"type": typ, "q": question, "a": answer})
 
-# ====================== 语音 & 导出 ======================
-def speech_input(label):
-    audio = mic_recorder(start_prompt="🎤 说话", stop_prompt="⏹ 停止", just_once=True)
-    return st.text_input(label, value=audio["text"] if (audio and "text" in audio) else "")
-
+# ====================== 导出 ======================
 def text_to_file(text, fn):
     b64 = base64.b64encode(text.encode()).decode()
     return f'<a href="data:text/plain;base64,{b64}" download="{fn}" style="text-decoration:none; color:#4A7DFF;">📄 保存文本</a>'
@@ -136,31 +131,31 @@ def text_to_image(text):
     im.save(buf,"PNG")
     return base64.b64encode(buf.getvalue()).decode()
 
-# ====================== 🏠 首页 ======================
+# ====================== 首页 ======================
 with tab1:
     st.markdown('<div class="title">🏠 生活小管家</div>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">你的随身AI生活助手</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subtitle">你的AI生活助手</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🍳 菜谱生成")
-    st.caption("家里有啥做啥，不浪费")
+    st.caption("家里有啥做啥")
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🛠️ 生活妙招")
-    st.caption("清洁、去污、收纳小技巧")
+    st.caption("清洁、去污、收纳")
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 📦 食材消耗")
-    st.caption("临期食材快速消耗")
+    st.caption("临期食材不浪费")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ====================== 🍳 菜谱 ======================
+# ====================== 菜谱 ======================
 with tab2:
     st.markdown('<div class="title">🍳 菜谱生成</div>', unsafe_allow_html=True)
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    ing = speech_input("现有食材")
+    ing = st.text_input("现有食材（逗号分隔）")
     pref = st.text_input("偏好/忌口", placeholder="减脂、不吃辣")
     col1,col2 = st.columns(2)
     with col1: num = st.number_input("人数",1,10,2)
@@ -180,11 +175,11 @@ with tab2:
         with c1: st.markdown(text_to_file(st.session_state.res,"菜谱.txt"),unsafe_allow_html=True)
         with c2: st.markdown(f'<a href="data:image/png;base64,{text_to_image(st.session_state.res)}" download="菜谱.png" style="color:#4A7DFF;">🖼️ 保存图片</a>',unsafe_allow_html=True)
 
-# ====================== 🛠️ 妙招 ======================
+# ====================== 妙招 ======================
 with tab3:
     st.markdown('<div class="title">🛠️ 生活妙招</div>', unsafe_allow_html=True)
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    q = speech_input("你想解决什么问题？")
+    q = st.text_input("你想解决什么问题？")
     st.markdown('</div>', unsafe_allow_html=True)
     if st.button("✅ 获取方法"):
         if q:
@@ -198,11 +193,11 @@ with tab3:
         with c1: st.markdown(text_to_file(st.session_state.res,"妙招.txt"),unsafe_allow_html=True)
         with c2: st.markdown(f'<a href="data:image/png;base64,{text_to_image(st.session_state.res)}" download="妙招.png" style="color:#4A7DFF;">🖼️ 保存图片</a>',unsafe_allow_html=True)
 
-# ====================== 📦 食材 ======================
+# ====================== 食材消耗 ======================
 with tab4:
     st.markdown('<div class="title">📦 食材消耗</div>', unsafe_allow_html=True)
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    s = speech_input("临期食材")
+    s = st.text_input("临期食材")
     st.markdown('</div>', unsafe_allow_html=True)
     if st.button("✅ 生成消耗菜谱"):
         if s:
@@ -217,7 +212,7 @@ with tab4:
         with c1: st.markdown(text_to_file(st.session_state.res,"消耗菜谱.txt"),unsafe_allow_html=True)
         with c2: st.markdown(f'<a href="data:image/png;base64,{text_to_image(st.session_state.res)}" download="消耗菜谱.png" style="color:#4A7DFF;">🖼️ 保存图片</a>',unsafe_allow_html=True)
 
-# ====================== 📜 历史 ======================
+# ====================== 历史 ======================
 with tab5:
     st.markdown('<div class="title">📜 历史记录</div>', unsafe_allow_html=True)
     if not st.session_state.history:
