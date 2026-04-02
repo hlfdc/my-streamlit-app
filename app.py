@@ -69,11 +69,11 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "🏠 首页", "🍳 菜谱", "🛠️ 妙招", "📦 食材", "📜 历史"
 ])
 
-# ====================== ✅ 你的正确AI配置（模型已替换） ======================
+# ====================== ✅ 你的AI配置（只改这里的模型名！） ======================
 API_KEY = "171a9a59-d91c-4716-899a-29ff6688de57"
 BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
-# 🔥 关键修复：模型名换成兼容的 doubao-pro-32k
-MODEL_NAME = "doubao-pro-32k" 
+# 👇 把这里换成你在豆包控制台复制的真实模型ID！
+MODEL_NAME = "doubao-lite-128k" 
 
 SYSTEM_PROMPT = """
 你是【生活小管家智能体】，专业、贴心、实用。
@@ -81,7 +81,7 @@ SYSTEM_PROMPT = """
 语言通俗、步骤简单、安全家用，不回答无关内容。
 """
 
-# ====================== AI聊天函数（增强容错） ======================
+# ====================== 增强版AI聊天函数（彻底防崩溃） ======================
 def chat(prompt):
     headers = {
         "Authorization": f"Bearer {API_KEY}",
@@ -93,19 +93,27 @@ def chat(prompt):
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0.6
+        "temperature": 0.6,
+        "max_tokens": 2000
     }
     try:
-        resp = requests.post(f"{BASE_URL}/chat/completions", headers=headers, json=data, timeout=30)
+        resp = requests.post(
+            f"{BASE_URL}/chat/completions", 
+            headers=headers, 
+            json=data, 
+            timeout=60
+        )
         res_json = resp.json()
         
-        # 🔍 打印返回数据帮你排查（可注释）
-        print("API返回：", res_json)
+        # 完整错误排查
+        if resp.status_code != 200:
+            return f"❌ API错误：{res_json.get('error', {}).get('message', '未知错误')}"
         
         if "choices" in res_json and len(res_json["choices"]) > 0:
             return res_json["choices"][0]["message"]["content"]
         else:
-            return "⚠️ AI返回异常，可能是模型版本限制，请重试"
+            return f"⚠️ AI返回异常：{res_json}"
+            
     except Exception as e:
         return f"❌ 连接失败：{str(e)}"
 
