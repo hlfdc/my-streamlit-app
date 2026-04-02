@@ -4,8 +4,9 @@ import base64
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
+import time
 
-# ====================== 页面配置（手机APP风格） ======================
+# ====================== 页面配置（微信极致体验） ======================
 st.set_page_config(
     page_title="生活小管家",
     page_icon="🏠",
@@ -13,53 +14,91 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ====================== 📱 手机APP美化CSS ======================
+# ====================== 开屏动画（APP启动页） ======================
+if "first_load" not in st.session_state:
+    st.session_state.first_load = True
+
+if st.session_state.first_load:
+    splash = st.empty()
+    splash.markdown("""
+        <div style="height: 100vh; display: flex; justify-content: center; align-items: center; flex-direction: column; background: #f5f7fa;">
+            <div style="font-size: 40px;">🏠</div>
+            <div style="font-size: 24px; font-weight: 700; margin-top: 20px;">生活小管家</div>
+            <div style="font-size: 14px; color: #888; margin-top: 10px;">AI 生活助手 · 启动中...</div>
+        </div>
+    """, unsafe_allow_html=True)
+    time.sleep(1.2)
+    splash.empty()
+    st.session_state.first_load = False
+
+# ====================== 全局CSS（小程序级UI） ======================
 st.markdown("""
 <style>
 body {
-    background-color: #f2f5f7 !important;
+    background: #f5f7fa !important;
     max-width: 480px !important;
     margin: 0 auto !important;
+    padding-bottom: 30px !important;
 }
 .block-container {
-    padding: 0 12px !important;
+    padding: 0 16px !important;
     max-width: 480px !important;
 }
+/* 卡片 */
 .card {
     background: #ffffff;
-    border-radius: 18px;
-    padding: 18px;
-    margin-bottom: 14px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+    border-radius: 22px;
+    padding: 22px;
+    margin-bottom: 18px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.05);
 }
+/* 标题 */
 .title {
-    font-size: 26px;
+    font-size: 29px;
     font-weight: 800;
-    color: #111827;
-    margin-bottom: 8px;
+    color: #111;
+    margin-bottom: 6px;
 }
 .subtitle {
     font-size: 15px;
-    color: #6b7280;
-    margin-bottom: 20px;
+    color: #777;
+    margin-bottom: 24px;
 }
+/* 按钮 */
 .stButton>button {
     width: 100% !important;
-    border-radius: 16px !important;
-    background-color: #4A7DFF !important;
+    border-radius: 20px !important;
+    background: #3E63F6 !important;
     color: white !important;
     font-size: 16px !important;
     font-weight: 600 !important;
-    padding: 14px !important;
+    padding: 17px !important;
     border: none !important;
 }
-.stTextInput>div>div, .stNumberInput>div>div, .stSelectbox>div>div {
-    border-radius: 16px !important;
-    height: 50px !important;
+.stButton>button:active {
+    background: #2E4AE0 !important;
 }
-section[data-testid="stSidebar"], #MainMenu, footer, header {
+/* 输入框 */
+.stTextInput>div>div, .stNumberInput>div>div, .stSelectbox>div>div {
+    border-radius: 18px !important;
+    height: 54px !important;
+    font-size: 15px !important;
+}
+/* 一键复制按钮 */
+.copy-btn {
+    background: #f0f4ff;
+    color: #3E63F6;
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-block;
+    margin-top: 8px;
+}
+/* 隐藏所有垃圾元素 */
+#MainMenu, footer, header, .stDeployButton, div[data-testid="stStatusWidget"] {
     display: none !important;
-    visibility: hidden !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -69,19 +108,18 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "🏠 首页", "🍳 菜谱", "🛠️ 妙招", "📦 食材", "📜 历史"
 ])
 
-# ====================== ✅ 你的正确AI配置（已填好！） ======================
+# ====================== AI配置（你真实可用） ======================
 API_KEY = "171a9a59-d91c-4716-899a-29ff6688de57"
 BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
-# 🔥 关键修复：用你截图里的真实接入点ID
 MODEL_NAME = "ep-20260402064205-f588x"
 
 SYSTEM_PROMPT = """
-你是【生活小管家智能体】，专业、贴心、实用。
-只回答生活相关：菜谱、清洁去污、衣物洗护、收纳、食材消耗、家务规划。
-语言通俗、步骤简单、安全家用，不回答无关内容。
+你是【生活小管家】，专业、贴心、步骤简单、安全家用。
+只回答：菜谱、清洁、收纳、衣物洗护、食材消耗。
+语言简洁清晰，不废话，实用为主。
 """
 
-# ====================== 增强版AI聊天函数（彻底防崩溃） ======================
+# ====================== AI聊天函数 ======================
 def chat(prompt):
     headers = {
         "Authorization": f"Bearer {API_KEY}",
@@ -93,75 +131,52 @@ def chat(prompt):
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0.6,
+        "temperature": 0.4,
         "max_tokens": 2000
     }
     try:
-        resp = requests.post(
-            f"{BASE_URL}/chat/completions", 
-            headers=headers, 
-            json=data, 
-            timeout=60
-        )
+        resp = requests.post(f"{BASE_URL}/chat/completions", headers=headers, json=data, timeout=45)
         res_json = resp.json()
-        
-        # 完整错误排查
-        if resp.status_code != 200:
-            return f"❌ API错误：{res_json.get('error', {}).get('message', '未知错误')}"
-        
         if "choices" in res_json and len(res_json["choices"]) > 0:
             return res_json["choices"][0]["message"]["content"]
         else:
-            return f"⚠️ AI返回异常：{res_json}"
-            
-    except Exception as e:
-        return f"❌ 连接失败：{str(e)}"
+            return "⚠️ 服务繁忙，请重试"
+    except:
+        return "❌ 网络异常，请检查后重试"
 
-# ====================== 历史记录 ======================
+# ====================== 历史 ======================
 if "history" not in st.session_state:
     st.session_state.history = []
 
 def add_history(typ, q, a):
     st.session_state.history.append({"type": typ, "q": q, "a": a})
 
-# ====================== 导出 ======================
+# ====================== 导出/复制 ======================
 def text_to_file(text, fn):
     b64 = base64.b64encode(text.encode()).decode()
-    return f'<a href="data:text/plain;base64,{b64}" download="{fn}" style="color:#4A7DFF; text-decoration:none;">📄 保存文本</a>'
+    return f'<a href="data:text/plain;base64,{b64}" download="{fn}" style="color:#3E63F6; text-decoration:none;">📄 保存文本</a>'
 
-def text_to_image(text):
-    lines = textwrap.wrap(text, 42)
-    h = min(1000, 80 + len(lines)*26)
-    im = Image.new("RGB", (600, h), "white")
-    d = ImageDraw.Draw(im)
-    f = ImageFont.load_default(size=18)
-    y = 25
-    for l in lines:
-        d.text((25, y), l, fill="#111", font=f)
-        y += 26
-    buf = BytesIO()
-    im.save(buf, "PNG")
-    return base64.b64encode(buf.getvalue()).decode()
+def copy_btn(text):
+    return f'''
+        <div class="copy-btn" onclick="navigator.clipboard.writeText(`{text.replace('`','')}`)">
+            📋 一键复制回答
+        </div>
+    '''
 
 # ====================== 首页 ======================
 with tab1:
     st.markdown('<div class="title">🏠 生活小管家</div>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">你的AI生活助手</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subtitle">你的AI全能生活助手</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 🍳 菜谱生成")
-    st.caption("家里有啥做啥")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 🛠️ 生活妙招")
-    st.caption("清洁、去污、收纳")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 📦 食材消耗")
-    st.caption("临期食材不浪费")
-    st.markdown('</div>', unsafe_allow_html=True)
+    for title, desc in [
+        ("🍳 菜谱生成", "家里有啥做啥"),
+        ("🛠️ 生活妙招", "清洁去污收纳技巧"),
+        ("📦 食材消耗", "临期食材不浪费"),
+    ]:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown(f"### {title}")
+        st.caption(desc)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ====================== 菜谱 ======================
 with tab2:
@@ -176,16 +191,16 @@ with tab2:
 
     if st.button("✅ 生成菜谱"):
         if ing:
-            with st.spinner("生成中..."):
-                q = f"食材{ing}，偏好{pref}，{num}人，{tm}，2个家常菜"
+            with st.spinner("正在生成..."):
+                q = f"食材{ing}，{num}人，{tm}，2个家常菜，偏好{pref}"
                 a = chat(q)
                 st.session_state.res = a
                 st.markdown(a)
+                st.markdown(copy_btn(a), unsafe_allow_html=True)
                 add_history("菜谱", q, a)
     if "res" in st.session_state:
         c1,c2 = st.columns(2)
         c1.markdown(text_to_file(st.session_state.res,"菜谱.txt"),unsafe_allow_html=True)
-        c2.markdown(f'<a href="data:image/png;base64,{text_to_image(st.session_state.res)}" download="菜谱.png" style="color:#4A7DFF; text-decoration:none;">🖼️ 保存图片</a>',unsafe_allow_html=True)
 
 # ====================== 妙招 ======================
 with tab3:
@@ -199,11 +214,11 @@ with tab3:
                 a = chat(f"生活问题：{q}，家用简单安全方法")
                 st.session_state.res = a
                 st.markdown(a)
+                st.markdown(copy_btn(a), unsafe_allow_html=True)
                 add_history("妙招", q, a)
     if "res" in st.session_state:
         c1,c2 = st.columns(2)
         c1.markdown(text_to_file(st.session_state.res,"妙招.txt"),unsafe_allow_html=True)
-        c2.markdown(f'<a href="data:image/png;base64,{text_to_image(st.session_state.res)}" download="妙招.png" style="color:#4A7DFF; text-decoration:none;">🖼️ 保存图片</a>',unsafe_allow_html=True)
 
 # ====================== 食材消耗 ======================
 with tab4:
@@ -214,14 +229,14 @@ with tab4:
     if st.button("✅ 生成消耗菜谱"):
         if s:
             with st.spinner("生成中..."):
-                a = chat(f"用食材{s}做家常菜，不浪费")
+                a = chat(f"用{s}做家常菜，简单好吃不浪费")
                 st.session_state.res = a
                 st.markdown(a)
+                st.markdown(copy_btn(a), unsafe_allow_html=True)
                 add_history("食材", s, a)
     if "res" in st.session_state:
         c1,c2 = st.columns(2)
         c1.markdown(text_to_file(st.session_state.res,"消耗菜谱.txt"),unsafe_allow_html=True)
-        c2.markdown(f'<a href="data:image/png;base64,{text_to_image(st.session_state.res)}" download="消耗菜谱.png" style="color:#4A7DFF; text-decoration:none;">🖼️ 保存图片</a>',unsafe_allow_html=True)
 
 # ====================== 历史 ======================
 with tab5:
@@ -233,3 +248,4 @@ with tab5:
             with st.expander(f"【{i['type']}】{i['q'][:25]}..."):
                 st.write("问题：", i['q'])
                 st.markdown(i['a'])
+                st.markdown(copy_btn(i['a']), unsafe_allow_html=True)
