@@ -69,10 +69,11 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "🏠 首页", "🍳 菜谱", "🛠️ 妙招", "📦 食材", "📜 历史"
 ])
 
-# ====================== ✅ 你的正确AI配置 ======================
+# ====================== ✅ 你的正确AI配置（模型已替换） ======================
 API_KEY = "171a9a59-d91c-4716-899a-29ff6688de57"
 BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
-MODEL_NAME = "doubao-seed-1.6-flash-4k"
+# 🔥 关键修复：模型名换成兼容的 doubao-pro-32k
+MODEL_NAME = "doubao-pro-32k" 
 
 SYSTEM_PROMPT = """
 你是【生活小管家智能体】，专业、贴心、实用。
@@ -80,7 +81,7 @@ SYSTEM_PROMPT = """
 语言通俗、步骤简单、安全家用，不回答无关内容。
 """
 
-# ====================== AI聊天函数 ======================
+# ====================== AI聊天函数（增强容错） ======================
 def chat(prompt):
     headers = {
         "Authorization": f"Bearer {API_KEY}",
@@ -97,10 +98,14 @@ def chat(prompt):
     try:
         resp = requests.post(f"{BASE_URL}/chat/completions", headers=headers, json=data, timeout=30)
         res_json = resp.json()
+        
+        # 🔍 打印返回数据帮你排查（可注释）
+        print("API返回：", res_json)
+        
         if "choices" in res_json and len(res_json["choices"]) > 0:
             return res_json["choices"][0]["message"]["content"]
         else:
-            return "⚠️ AI返回异常，请重试"
+            return "⚠️ AI返回异常，可能是模型版本限制，请重试"
     except Exception as e:
         return f"❌ 连接失败：{str(e)}"
 
@@ -130,7 +135,7 @@ def text_to_image(text):
     im.save(buf, "PNG")
     return base64.b64encode(buf.getvalue()).decode()
 
-# ====================== 首页（已修复###问题） ======================
+# ====================== 首页 ======================
 with tab1:
     st.markdown('<div class="title">🏠 生活小管家</div>', unsafe_allow_html=True)
     st.markdown('<div class="subtitle">你的AI生活助手</div>', unsafe_allow_html=True)
