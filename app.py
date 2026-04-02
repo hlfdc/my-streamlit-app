@@ -10,7 +10,7 @@ import textwrap
 
 load_dotenv()
 
-# ====================== 页面配置 ======================
+# ====================== 页面配置（必须第一行） ======================
 st.set_page_config(
     page_title="生活小管家智能体",
     page_icon="🏠",
@@ -18,11 +18,55 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 美化
+# ====================== ✅ 完整版 CSS 美化（盒子 + 按钮 + 卡片 + 隐藏水印） ======================
 st.markdown("""
 <style>
-.block-container { padding-top:1rem; padding-bottom:2rem; }
-section[data-testid="stSidebar"] { background-color: #f8f9fa; }
+    /* 全局布局 */
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 2rem;
+    }
+    
+    /* 侧边栏 */
+    section[data-testid="stSidebar"] {
+        background-color: #f8f9fa !important;
+    }
+
+    /* 主标题 */
+    .main-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #1E40AF;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    /* 卡片盒子（你要的 CSS 盒子在这里！） */
+    .card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+        margin-bottom: 18px;
+    }
+
+    /* 按钮美化 */
+    .stButton>button {
+        background-color: #2563EB !important;
+        color: white !important;
+        font-size: 16px !important;
+        border-radius: 8px !important;
+        padding: 10px 25px !important;
+        border: none !important;
+        font-weight: 600 !important;
+    }
+    .stButton>button:hover {
+        background-color: #1D4ED8 !important;
+    }
+
+    /* 隐藏 Streamlit 水印 */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -113,22 +157,28 @@ def text_to_image(text, width=600):
     img.save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode()
 
-# ====================== 🏠 首页 ======================
+# ====================== 🏠 首页（已加卡片） ======================
 if menu == "🏠 首页":
-    st.title("🏠 生活小管家智能体")
+    st.markdown('<h1 class="main-title">🏠 生活小管家智能体</h1>', unsafe_allow_html=True)
     st.subheader("你的随身生活帮手，说话就能用 ✅")
     st.markdown("---")
 
     col1, col2, col3 = st.columns(3)
     with col1:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
         st.markdown("### 🍳 菜谱生成")
         st.write("家里有啥做啥，减脂/快手/家常")
+        st.markdown('</div>', unsafe_allow_html=True)
     with col2:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
         st.markdown("### 🛠️ 生活妙招")
         st.write("清洁、去污、洗护、收纳")
+        st.markdown('</div>', unsafe_allow_html=True)
     with col3:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
         st.markdown("### 📦 食材消耗")
         st.write("清空冰箱，不浪费粮食")
+        st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
     st.markdown("## 🌟 使用说明")
@@ -137,7 +187,8 @@ if menu == "🏠 首页":
 
 # ====================== 🍳 菜谱 ======================
 elif menu == "🍳 菜谱生成":
-    st.title("🍳 个性化菜谱")
+    st.markdown('<h1 class="main-title">🍳 个性化菜谱</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
         ingredients = speech_input("现有食材（逗号分隔）")
@@ -145,6 +196,7 @@ elif menu == "🍳 菜谱生成":
     with col2:
         people = st.number_input("用餐人数", 1, 10, 2)
         max_time = st.selectbox("最长用时", ["10分钟", "20分钟", "30分钟", "不限"])
+    st.markdown('</div>', unsafe_allow_html=True)
 
     if st.button("✅ 生成菜谱", use_container_width=True):
         if not ingredients:
@@ -168,8 +220,11 @@ elif menu == "🍳 菜谱生成":
 
 # ====================== 🛠️ 生活妙招 ======================
 elif menu == "🛠️ 生活妙招":
-    st.title("🛠️ 生活小妙招")
+    st.markdown('<h1 class="main-title">🛠️ 生活小妙招</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     question = speech_input("你想解决什么问题？")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     if st.button("✅ 获取方法", use_container_width=True):
         if question:
             with st.spinner("正在查找..."):
@@ -191,8 +246,11 @@ elif menu == "🛠️ 生活妙招":
 
 # ====================== 📦 食材消耗 ======================
 elif menu == "📦 食材消耗":
-    st.title("📦 临期食材消耗")
+    st.markdown('<h1 class="main-title">📦 临期食材消耗</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     stock = speech_input("输入快过期的食材（可语音）")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     if st.button("✅ 生成不浪费菜谱", use_container_width=True):
         if stock:
             q = f"快过期食材：{stock}"
